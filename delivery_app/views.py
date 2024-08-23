@@ -39,9 +39,17 @@ def add_delivery(request):
     else:
         return HttpResponse('bad request')
 
-def check_delivery_status(request, code):
-    delivery = Delivery.objects.get(code = code)
-    return HttpResponse(f"delivery with code {delivery.code} is {delivery.delivery_status}")
+def check_delivery_status(request):
+    if request.method == 'POST':
+        try:
+            body = json.loads(request.body)
+            delivery = Delivery.objects.get(code = body['code'])
+            return JsonResponse({"status" : delivery.delivery_status})
+        except:
+            return HttpResponse('bad request')
+    else:
+        return HttpResponse('bad request')
+    
 
 def cancle_delivery(request, code):
     delivery = Delivery.objects.get(code = code)
