@@ -32,5 +32,5 @@ def check_delivery_status(request, code):
 def cancle_delivery(request, code):
     delivery = Delivery.objects.get(code = code)
     delivery.delivery_status = 10
-    delivery.save()
+    delivery.save() 
     return HttpResponse(f"delivery with code {delivery.code} is cancled")
