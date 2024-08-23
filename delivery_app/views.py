@@ -1,6 +1,9 @@
 from django.http.response import HttpResponse, JsonResponse
 from delivery_app.models import Delivery, Courier, Location
+from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
+import json
+import random
 
 def show_delivery(request):
     deliveries = Delivery.objects.all()
@@ -17,13 +20,24 @@ def show_delivery(request):
 
 def welcome_page(request):
     return render(request, 'delivery_app/welcome.html')
-def add_delivery(request, code, origin_lat, origin_long, destination_lat, destination_long, courier_id):
-    courier = Courier.objects.get(id = courier_id)
-    origin = Location.objects.create(lat = origin_lat, long = origin_long)
-    destination = Location.objects.create(lat = destination_lat, long = destination_long)
-    delivery = Delivery.objects.create(code = code, origin = origin, destination = destination, courier = courier, courier_phone_number = courier.courier_phone_number, courier_plate = courier.plate)
-    delivery.save()
-    return HttpResponse(f"delivery with code {delivery.code} created successfully")
+@csrf_exempt
+def add_delivery(request):
+    if request.method == 'POST':
+        while(True):
+            code = random.randint(1, 9999999)
+            try :
+                this_delivery = Delivery.objects.get(code = code)
+
+            except:
+                break
+        body = json.loads(request.body)
+        origin = Location.objects.create(lat = body['origin_lat'], long = body['origin_long'])
+        destination = Location.objects.create(lat = body['destination_lat'], long = body['destination_long'])
+        delivery = Delivery.objects.create(code = code, origin = origin, destination = destination, delivery_status = 1, max_delivery_time = '1', delivery_price = '1', courier = None)
+        delivery.save()
+        return HttpResponse(f"delivery with code {delivery.code} created successfully")
+    else:
+        return HttpResponse('bad request')
 
 def check_delivery_status(request, code):
     delivery = Delivery.objects.get(code = code)
@@ -34,3 +48,5 @@ def cancle_delivery(request, code):
     delivery.delivery_status = 10
     delivery.save() 
     return HttpResponse(f"delivery with code {delivery.code} is cancled")
+def choose_delivery(request):
+    pass

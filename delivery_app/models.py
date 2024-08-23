@@ -18,10 +18,10 @@ class Location(models.Model):
 
 
 class Delivery(models.Model):
-    code = models.CharField(max_length = 7)
+    code = models.CharField(max_length = 7, unique=True)
     origin = models.ForeignKey(Location, on_delete = models.CASCADE, related_name='delivery_origin', verbose_name="delivery_code")  
     destination = models.ForeignKey(Location, on_delete = models.CASCADE, related_name='delivery_destiation', verbose_name="customer_addres")  
-    courier = models.ForeignKey(Courier, on_delete = models.PROTECT)
+    courier = models.ForeignKey(Courier, on_delete = models.PROTECT, blank = True, null = True)
     delivery_status = models.IntegerField()
     max_delivery_time = models.CharField(max_length=120)
     delivery_price = models.FloatField()
