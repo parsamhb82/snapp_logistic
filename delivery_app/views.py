@@ -52,9 +52,12 @@ def check_delivery_status(request):
     
 
 def cancle_delivery(request, code):
-    delivery = Delivery.objects.get(code = code)
-    delivery.delivery_status = 10
-    delivery.save() 
-    return HttpResponse(f"delivery with code {delivery.code} is cancled")
+    if request.method == 'POST':
+         delivery = Delivery.objects.get(code = code)
+         delivery.delivery_status = 10
+         delivery.save() 
+         return HttpResponse(f"delivery with code {delivery.code} is cancled")
+    else:
+        return HttpResponse('bad request')
 def choose_delivery(request):
     pass
