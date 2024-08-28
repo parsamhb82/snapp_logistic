@@ -76,8 +76,8 @@ The project follows the Model-View-Template (MVT) pattern of Django. The main co
 
 
 ## Authors
-- **Rozhina Rafiee** - [rozhina@example.com](mailto:rozhina@example.com)
-- **Parsa Mohebian** - [parsa1382mohebian@gmail.com](mailto:parsa@example.com)
+- **Rozhina Rafiee** - [Rozhinarafiee014@gmail.com](mailtoRozhinarafiee014@gmail.com)
+- **Parsa Mohebian** - [parsa1382mohebian@gmail.com](mailto:parsa1382mohebian@gmail.com)
 - **Soroush Salamati** - [soroushsalamati94@gmail.com](soroushsalamati94@gmail.com)
 - **Fatemeh Khanmohammadi** - [fatemeh@example.com](mailto:fatemeh@example.com)
 
