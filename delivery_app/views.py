@@ -4,22 +4,19 @@ from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
 import json
 import random
+import requests
+from .serializers import DeliverySerializer
+from rest_framework.generics import ListAPIView, RetrieveAPIView
 
-def show_delivery(request):
-    deliveries = Delivery.objects.all()
-    deliveries_list = []
-    for item in deliveries:
-        delivery_dict = {
-            "code" : item.code,
-            "origin" : item.origin.lat,
-            "destination" : item.origin.long
 
-        } 
-        deliveries_list.append(delivery_dict)
-        return JsonResponse(deliveries_list, safe=False)
+class DeliveryList(ListAPIView):
+    queryset = Delivery.objects.all()
+    serializer_class = DeliverySerializer
 
 def welcome_page(request):
     return render(request, 'delivery_app/welcome.html')
+
+
 @csrf_exempt
 def add_delivery(request):
     if request.method == 'POST':
@@ -61,3 +58,9 @@ def cancle_delivery(request, code):
         return HttpResponse('bad request')
 def choose_delivery(request):
     pass
+
+def get_directions(request):
+    url = ''
+    api_key = ''
+    response = requests.get(url, headers={'Api-Key': api_key})
+    return JsonResponse(json.loads(response.content), safe=False)
