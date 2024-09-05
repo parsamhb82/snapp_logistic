@@ -1,6 +1,8 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 class Courier(models.Model):
+    user = models.OneToOneField(User, on_delete = models.PROTECT)
     name = models.CharField(max_length = 50, help_text="the courior name should have less than 50 characters")
     wallet = models.OneToOneField('Wallet', on_delete = models.PROTECT)
     courier_status = models.IntegerField()
@@ -18,7 +20,7 @@ class Location(models.Model):
 
 
 class Delivery(models.Model):
-    code = models.CharField(max_length = 7, unique=True)
+    code = models.CharField(max_length = 16, unique=True)
     origin = models.ForeignKey(Location, on_delete = models.CASCADE, related_name='delivery_origin', verbose_name="delivery_code")  
     destination = models.ForeignKey(Location, on_delete = models.CASCADE, related_name='delivery_destiation', verbose_name="customer_addres")  
     courier = models.ForeignKey(Courier, on_delete = models.PROTECT, blank = True, null = True)
@@ -28,15 +30,17 @@ class Delivery(models.Model):
     def __str__(self) -> str:
         return self.code
     class Meta:
-        verbose_name = "my_delivery"
-        verbose_name_plural = "my_delivery" 
+        verbose_name = "delivery"
+        verbose_name_plural = "deliveries" 
 
 class Wallet(models.Model):
     current_money = models.IntegerField(blank = True, null = True)
 
+
     
 class Transaction(models.Model):
     wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, blank = True, null=True)
+    amount = models.FloatField(blank=True, null=True)
     
 
 

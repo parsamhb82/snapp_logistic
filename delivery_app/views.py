@@ -5,8 +5,24 @@ from django.shortcuts import render
 import json
 import random
 import requests
-from .serializers import DeliverySerializer
+from .serializers import DeliverySerializer, DeliveryStatusSerializer
 from rest_framework.generics import ListAPIView, RetrieveAPIView
+import uuid
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework.permissions import IsAuthenticated
+
+
+class CourierLoginView(TokenObtainPairView):
+    pass
+
+class CourierRefreshView(TokenRefreshView):
+    pass
+
+def generate_unique_delivary_code():
+    while True:
+        code = str(uuid.uuid4())[:16]
+        if not Delivery.objects.filter(code = code).exists():
+            return code
 
 
 class DeliveryList(ListAPIView):
@@ -20,33 +36,26 @@ def welcome_page(request):
 @csrf_exempt
 def add_delivery(request):
     if request.method == 'POST':
-        while(True):
-            code = random.randint(1, 9999999)
-            try :
-                this_delivery = Delivery.objects.get(code = code)
-
-            except:
-                break
+        code = generate_unique_delivary_code()
         body = json.loads(request.body)
         origin = Location.objects.create(lat = body['origin_lat'], long = body['origin_long'])
         destination = Location.objects.create(lat = body['destination_lat'], long = body['destination_long'])
-        delivery = Delivery.objects.create(code = code, origin = origin, destination = destination, delivery_status = 1, max_delivery_time = '1', delivery_price = '1', courier = None)
+        json_file = api_to_neshan(body['origin_lat'], body['origin_long'], body['destination_lat'], body['destination_long'])
+        delivery_price = json_file["routes"][0]['legs'][0]['distance']['value']
+        delivary_duration = json_file["routes"][0]['legs'][0]['duration']['value'] 
+        delivary_duration = int(delivary_duration) + random.randint(100, 1000)
+        delivary_duration = (delivary_duration // 60) + 1
+        delivery_price = int(delivery_price) * 10
+        delivery = Delivery.objects.create(code = code, origin = origin, destination = destination, delivery_status = 1, max_delivery_time = f'{delivary_duration}', delivery_price = delivery_price, courier = None)
         delivery.save()
         return HttpResponse(f"delivery with code {delivery.code} created successfully")
     else:
         return HttpResponse('bad request')
-
-def check_delivery_status(request):
-    if request.method == 'POST':
-        try:
-            body = json.loads(request.body)
-            delivery = Delivery.objects.get(code = body['code'])
-            return JsonResponse({"status" : delivery.delivery_status})
-        except:
-            return HttpResponse('bad request')
-    else:
-        return HttpResponse('bad request')
     
+class RetrieveDeliverystatus(RetrieveAPIView):
+    queryset = Delivery.objects.all()
+    serializer_class = DeliveryStatusSerializer
+  
 
 def cancle_delivery(request, code):
     if request.method == 'POST':
@@ -56,11 +65,27 @@ def cancle_delivery(request, code):
          return HttpResponse(f"delivery with code {delivery.code} is cancled")
     else:
         return HttpResponse('bad request')
-def choose_delivery(request):
-    pass
 
-def get_directions(request):
-    url = ''
-    api_key = ''
+
+class ChooseDelivery(ListAPIView):
+    queryset = Delivery.objects.all()
+    serializer_class = DeliverySerializer
+
+class ShowAvailableDelivery(ListAPIView):
+    queryset = Delivery.objects.filter(delivery_status = 1).order_by('delivery_price')
+    serializer_class = DeliverySerializer
+    permission_classes = [IsAuthenticated]
+    
+
+
+
+
+def api_to_neshan(request, orilat, orilong, destlat,destlong):
+    
+    url = f'https://api.neshan.org/v4/direction?type=motorcycle&origin={orilat},{orilong}&destination={destlat},{destlong}'
+    api_key = 'service.9fc8ab4077f34c9eaf03966f572c33f6'
     response = requests.get(url, headers={'Api-Key': api_key})
-    return JsonResponse(json.loads(response.content), safe=False)
+    json_file = json.loads(response.content)
+    #distance = json_file["routes"][0]['legs'][0]['distance']['value']
+    return json_file
+    
