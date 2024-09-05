@@ -10,6 +10,7 @@ from rest_framework.generics import ListAPIView, RetrieveAPIView
 import uuid
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework.permissions import IsAuthenticated
+from .permissions import CourierPermission, SuperUserPermission
 
 
 class CourierLoginView(TokenObtainPairView):
@@ -28,6 +29,7 @@ def generate_unique_delivary_code():
 class DeliveryList(ListAPIView):
     queryset = Delivery.objects.all()
     serializer_class = DeliverySerializer
+    permission_classes = [SuperUserPermission]
 
 def welcome_page(request):
     return render(request, 'delivery_app/welcome.html')
@@ -55,6 +57,7 @@ def add_delivery(request):
 class RetrieveDeliverystatus(RetrieveAPIView):
     queryset = Delivery.objects.all()
     serializer_class = DeliveryStatusSerializer
+    permission_classes = [IsAuthenticated, CourierPermission]
   
 
 def cancle_delivery(request, code):
@@ -70,11 +73,12 @@ def cancle_delivery(request, code):
 class ChooseDelivery(ListAPIView):
     queryset = Delivery.objects.all()
     serializer_class = DeliverySerializer
+    permission_classes = [IsAuthenticated, CourierPermission]
 
 class ShowAvailableDelivery(ListAPIView):
     queryset = Delivery.objects.filter(delivery_status = 1).order_by('delivery_price')
     serializer_class = DeliverySerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, CourierPermission]
     
 
 
