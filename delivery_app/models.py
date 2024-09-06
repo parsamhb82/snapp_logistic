@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 
 class Courier(models.Model):
-    user = models.OneToOneField(User, on_delete = models.PROTECT)
+    user = models.OneToOneField(User, on_delete = models.PROTECT, blank=True, null=True)
     name = models.CharField(max_length = 50, help_text="the courior name should have less than 50 characters")
     wallet = models.OneToOneField('Wallet', on_delete = models.PROTECT)
     courier_status = models.IntegerField()

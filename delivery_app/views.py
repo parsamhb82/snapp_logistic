@@ -5,12 +5,15 @@ from django.shortcuts import render
 import json
 import random
 import requests
-from .serializers import DeliverySerializer, DeliveryStatusSerializer
+from .serializers import DeliverySerializer, DeliveryStatusSerializer, CreateDeliverySerializer
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 import uuid
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework.permissions import IsAuthenticated
 from .permissions import CourierPermission, SuperUserPermission
+from rest_framework.views import APIView    
+from rest_framework.response import Response
+from rest_framework import status
 
 
 class CourierLoginView(TokenObtainPairView):
@@ -84,7 +87,7 @@ class ShowAvailableDelivery(ListAPIView):
 
 
 
-def api_to_neshan(request, orilat, orilong, destlat,destlong):
+def api_to_neshan(orilat, orilong, destlat,destlong):
     
     url = f'https://api.neshan.org/v4/direction?type=motorcycle&origin={orilat},{orilong}&destination={destlat},{destlong}'
     api_key = 'service.9fc8ab4077f34c9eaf03966f572c33f6'
@@ -93,3 +96,25 @@ def api_to_neshan(request, orilat, orilong, destlat,destlong):
     #distance = json_file["routes"][0]['legs'][0]['distance']['value']
     return json_file
     
+class CreateDelivery(APIView):
+
+    def post(self, request):
+        serializer = CreateDeliverySerializer(data = request.data)
+        if serializer.is_valid():
+            code = generate_unique_delivary_code()
+            origin = Location.objects.create(lat = serializer.validated_data['origin_lat'], long = serializer.validated_data['origin_long'])
+            destination = Location.objects.create(lat = serializer.validated_data['destination_lat'], long = serializer.validated_data['destination_long'])
+            json_file = api_to_neshan(serializer.validated_data['origin_lat'], serializer.validated_data['origin_long'], serializer.validated_data['destination_lat'], serializer.validated_data['destination_long'])
+            delivery_price = json_file["routes"][0]['legs'][0]['distance']['value']
+            delivary_duration = json_file["routes"][0]['legs'][0]['duration']['value']
+            delivary_duration = int(delivary_duration) + random.randint(100, 1000)
+            delivary_duration = delivary_duration = (delivary_duration // 60) + 1
+            delivery_price = int(delivery_price) * 10
+            delivery = Delivery.objects.create(code = code, origin = origin, destination = destination, delivery_status = 1, max_delivery_time = f'{delivary_duration}', delivery_price = delivery_price, courier = None)
+            return Response({"message": "Delivery created successfully"}, status=status.HTTP_201_CREATED)
+        return Response({"error": "Bad request"}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+
+
+        

@@ -1,5 +1,5 @@
 from django.urls import path
-from delivery_app.views import welcome_page, add_delivery, cancle_delivery, DeliveryList
+from delivery_app.views import welcome_page, add_delivery, cancle_delivery, DeliveryList, CreateDelivery
 
 urlpatterns = [
     path('', welcome_page),
@@ -8,4 +8,5 @@ urlpatterns = [
     path('cancle_delivery/<str:code>/', cancle_delivery),
     path('delivey_list/', DeliveryList.as_view()),
     #path('find_distance/<str:orilat>/<str:orilong>/<str:destlat>/<str:destlong>/', find_distance)
+    path('create_delivery/', CreateDelivery.as_view())
 ]
