@@ -110,8 +110,6 @@ class ShowDeliveriesToCourier(APIView):
         deliveries = Delivery.objects.filter(delivery_status = 1)
         courier_lat = 35.725729
         courier_long = 51.373739
-        lats = []
-        longs = []
         paramsstr = ''
         for delivery in deliveries:
             if delivery.delivery_status == 1:
