@@ -14,6 +14,8 @@ from .permissions import CourierPermission, SuperUserPermission
 from rest_framework.views import APIView    
 from rest_framework.response import Response
 from rest_framework import status
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters
 
 
 class CourierLoginView(TokenObtainPairView):
@@ -21,6 +23,24 @@ class CourierLoginView(TokenObtainPairView):
 
 class CourierRefreshView(TokenRefreshView):
     pass
+
+def API_to_find_all_deliveries(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        courier_lat = data['courier_lat']
+        courier_long = data['courier_long']
+        deliveries = Delivery.objects.filter(delivery_status = 1)
+        paramsstr = ''
+        for delivery in deliveries :
+            paramsstr += f"{delivery.origin.lat},{delivery.origin.long}|"
+        paramsstr = paramsstr[:-1]
+        url = f"https://api.neshan.org/v1/distance-matrix/no-traffic?type=car&origins={courier_lat},{courier_long}&destinations={paramsstr}"
+        api_key = 'service.9fc8ab4077f34c9eaf03966f572c33f6'
+        response = requests.get(url, headers={'Api-Key': api_key})
+        json_file = json.loads(response.content)
+        return json_file
+
+            
 
 def generate_unique_delivary_code():
     while True:
@@ -77,9 +97,12 @@ class ChooseDelivery(ListAPIView):
     queryset = Delivery.objects.all()
     serializer_class = DeliverySerializer
     permission_classes = [IsAuthenticated, CourierPermission]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    ordering_fields = ['price', 'max_delivery_time']
+
 
 class ShowAvailableDelivery(ListAPIView):
-    queryset = Delivery.objects.filter(delivery_status = 1).order_by('delivery_price')
+    queryset = Delivery.objects.filter(delivery_status = 1)
     serializer_class = DeliverySerializer
     permission_classes = [IsAuthenticated, CourierPermission]
     
@@ -113,7 +136,43 @@ class CreateDelivery(APIView):
             delivery = Delivery.objects.create(code = code, origin = origin, destination = destination, delivery_status = 1, max_delivery_time = f'{delivary_duration}', delivery_price = delivery_price, courier = None)
             return Response({"message": "Delivery created successfully"}, status=status.HTTP_201_CREATED)
         return Response({"error": "Bad request"}, status=status.HTTP_400_BAD_REQUEST)
-        
+    
+class ShowDeliveriesToCourier(APIView):
+    permission_classes = [IsAuthenticated, CourierPermission]
+
+    def get(self, request):
+        deliveries = Delivery.objects.filter(delivery_status = 1)
+        courier_lat = 35.725729
+        courier_long = 51.373739
+        lats = []
+        longs = []
+        paramsstr = ''
+        for delivery in deliveries:
+            paramsstr += f"{delivery.origin.lat},{delivery.origin.long}|"
+        paramsstr = paramsstr[:-1]
+        url = f"https://api.neshan.org/v1/distance-matrix/no-traffic?type=car&origins={courier_lat},{courier_long}&destinations={paramsstr}"
+        api_key = 'service.680950bb710e40c59ec4c81b22f131c4'
+        response = requests.get(url, headers={'Api-Key': api_key})
+        json_file = json.loads(response.content)
+        if json_file['status'] == 'OK':
+            rows = json_file['rows'][0]
+            elements = rows['elements']
+            response_data = []
+            for element in elements:
+                if element['status'] == 'OK':
+                    distance = element['distance']['value']
+                    if distance <= 3000:
+                        response_data.append(element)
+            return Response(response_data, status=status.HTTP_200_OK)
+        return Response({"error": "Bad request Couldn't get the info from neshan"}, status=status.HTTP_400_BAD_REQUEST)
+    
+
+            
+
+
+
+
+            
 
 
 
