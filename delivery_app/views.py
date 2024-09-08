@@ -6,7 +6,7 @@ import json
 import random
 import requests
 from .serializers import DeliverySerializer, DeliveryStatusSerializer, CreateDeliverySerializer
-from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView, UpdateAPIView
 import uuid
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework.permissions import IsAuthenticated
@@ -148,7 +148,8 @@ class ShowDeliveriesToCourier(APIView):
         longs = []
         paramsstr = ''
         for delivery in deliveries:
-            paramsstr += f"{delivery.origin.lat},{delivery.origin.long}|"
+            if delivery.status == 1:
+                paramsstr += f"{delivery.origin.lat},{delivery.origin.long}|"
         paramsstr = paramsstr[:-1]
         url = f"https://api.neshan.org/v1/distance-matrix/no-traffic?type=car&origins={courier_lat},{courier_long}&destinations={paramsstr}"
         api_key = 'service.680950bb710e40c59ec4c81b22f131c4'
@@ -165,7 +166,22 @@ class ShowDeliveriesToCourier(APIView):
                         response_data.append(element)
             return Response(response_data, status=status.HTTP_200_OK)
         return Response({"error": "Bad request Couldn't get the info from neshan"}, status=status.HTTP_400_BAD_REQUEST)
-    
+
+class UpdateDelivery(UpdateAPIView):
+    queryset = Delivery.objects.all()
+    serializer_class = DeliverySerializer
+    permission_classes = [IsAuthenticated, CourierPermission]
+
+    def update(self, request, *args, **kwargs):
+        delivery = self.get_object()
+        if delivery.delivery_status == 1:
+            delivery.delivery_status = 2
+            delivery.courier = request.user.courier
+            delivery.save()
+            return Response({"message": "Delivery updated successfully"}, status=status.HTTP_200_OK)
+        elif delivery.delivery_status == 2:
+            delivery.delivery_status = 3
+        return Response({"error": "Bad request"}, status=status.HTTP_400_BAD_REQUEST)
 
             
 
