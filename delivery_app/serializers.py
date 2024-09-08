@@ -1,4 +1,4 @@
-from .models import Delivery
+from .models import Delivery, Courier, Wallet, Transaction
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
 
@@ -17,3 +17,17 @@ class CreateDeliverySerializer(serializers.Serializer):
     origin_long = serializers.FloatField()
     destination_lat = serializers.FloatField()
     destination_long = serializers.FloatField()
+
+class CourierSerializer(ModelSerializer):
+    class Meta:
+        model = Courier
+        fields = '__all__'
+
+class CourierRegisterSerializer(ModelSerializer):
+    plate = serializers.CharField(max_length=10)
+    courier_phone_number = serializers.CharField(max_length=11)
+
+
+    class Meta:
+        model = Courier
+        fields = ['username', 'password', 'plate', 'courier_phone_number', 'first_name', 'last_name', 'national_code']

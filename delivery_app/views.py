@@ -1,12 +1,13 @@
 from django.http.response import HttpResponse, JsonResponse
-from delivery_app.models import Delivery, Courier, Location
+from django.contrib.auth.models import User
+from delivery_app.models import Delivery, Courier, Location, Wallet
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
 import json
 import random
 import requests
-from .serializers import DeliverySerializer, DeliveryStatusSerializer, CreateDeliverySerializer
-from rest_framework.generics import ListAPIView, RetrieveAPIView, UpdateAPIView
+from .serializers import DeliverySerializer, DeliveryStatusSerializer, CreateDeliverySerializer, CourierRegisterSerializer
+from rest_framework.generics import ListAPIView, RetrieveAPIView, UpdateAPIView, CreateAPIView
 import uuid
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework.permissions import IsAuthenticated
@@ -180,10 +181,23 @@ class UpdateDelivery(UpdateAPIView):
             delivery.save()
             return Response({"message": "Delivery updated successfully"}, status=status.HTTP_200_OK)
         elif delivery.delivery_status == 2:
+            courier = request.user.courier
+            courier.wallet.current_money += delivery.delivery_price
             delivery.delivery_status = 3
         return Response({"error": "Bad request"}, status=status.HTTP_400_BAD_REQUEST)
 
-            
+class CourierRegistrationView(CreateAPIView):
+    serializer_class = CourierRegisterSerializer
+
+    def perform_create(self, serializer):
+        user = User.objects.create_user(username=serializer.validated_data['username'], 
+                                        password=serializer.validated_data['password'], 
+                                        first_name=serializer.validated_data['first_name'], 
+                                        last_name=serializer.validated_data['last_name'],
+                                        natinal_code=serializer.validated_data['natinal_code'])
+        courier = Courier.objects.create(user=user, courier_phone_number = serializer.validated_data['courier_phone_number'], plate=serializer.validated_data['plate'])
+        wallet = Wallet.objects.create(user=user, current_money = 0)
+
 
 
 
