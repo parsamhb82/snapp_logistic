@@ -1,6 +1,7 @@
 from .models import Delivery, Courier, Wallet, Transaction
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
+from django.contrib.auth.models import User
 
 class DeliverySerializer(ModelSerializer):
     class Meta:
@@ -29,5 +30,5 @@ class CourierRegisterSerializer(ModelSerializer):
 
 
     class Meta:
-        model = Courier
-        fields = ['username', 'password', 'plate', 'courier_phone_number', 'first_name', 'last_name', 'national_code']
+        model = User
+        fields = ['username', 'password', 'plate', 'courier_phone_number', 'first_name', 'last_name']
