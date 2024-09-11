@@ -11,7 +11,7 @@ urlpatterns = [
     path('courier-refresh/', CourierRefreshView.as_view()),
     path('retrieve-delivery-status/', RetrieveDeliverystatus.as_view()),
     path('choose-delivery/', ChooseDelivery.as_view()),
-    path('show-available-delivery/', ShowAvailableDelivery.as_view()),
+    #path('show-available-delivery/', ShowAvailableDelivery.as_view()),
     path('update-delivery/', UpdateDelivery.as_view()),
     path('courier-registration/', CourierRegistrationView.as_view())
 ]

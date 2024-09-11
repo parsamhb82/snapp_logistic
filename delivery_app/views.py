@@ -45,6 +45,9 @@ class RetrieveDeliverystatus(RetrieveAPIView):
     queryset = Delivery.objects.all()
     serializer_class = DeliveryStatusSerializer
     permission_classes = [IsAuthenticated, CourierPermission]
+
+    def get_queryset(self):
+        return Delivery.objects.filter(courier = self.request.user.courier)
   
 
 def cancle_delivery(request, code):
@@ -108,7 +111,7 @@ class ShowDeliveriesToCourier(APIView):
         if request.user.courier.courier_status == 2:
             return Response({"error": "You are not available"}, status=status.HTTP_400_BAD_REQUEST)
         deliveries = Delivery.objects.filter(delivery_status = 1)
-        courier_lat = 35.725729
+        courier_lat = 35.725729 # needs to be implemented
         courier_long = 51.373739
         paramsstr = ''
         for delivery in deliveries:
@@ -136,21 +139,28 @@ class UpdateDelivery(UpdateAPIView):
     serializer_class = DeliverySerializer
     permission_classes = [IsAuthenticated, CourierPermission]
 
+
     def update(self, request, *args, **kwargs):
         delivery = self.get_object()
-        if delivery.delivery_status == 1:
+        if request.user != delivery.courier:
+            return Response({"error": "You are not the courier of this delivery"}, status=status.HTTP_400_BAD_REQUEST)
+        if delivery.delivery_status == 1 and delivery.courier == None and request.user.courier.courier_status == 1:
             delivery.delivery_status = 2
             delivery.courier = request.user.courier
             courier = request.user.courier
             courier.courier_status = 2
             delivery.save()
+            courier.save()
             return Response({"message": "Delivery updated successfully"}, status=status.HTTP_200_OK)
-        elif delivery.delivery_status == 2:
+        elif delivery.delivery_status == 2  and delivery.courier == request.user.courier:
             courier = request.user.courier
             transaction = Transaction.objects.create(wallet = courier.wallet, amount = delivery.delivery_price)
             courier.wallet.amount += delivery.delivery_price
             delivery.delivery_status = 3
             courier.courier_status = 1
+            delivery.save()
+            courier.save()
+            return Response({"message": "Delivery updated successfully"}, status=status.HTTP_200_OK)
         return Response({"error": "Bad request"}, status=status.HTTP_400_BAD_REQUEST)
 
 class CourierRegistrationView(CreateAPIView):
@@ -160,7 +170,7 @@ class CourierRegistrationView(CreateAPIView):
         user = User.objects.create_user(username=serializer.validated_data['username'], 
                                         password=serializer.validated_data['password'], 
                                         first_name=serializer.validated_data['first_name'], 
-                                        last_name=serializer.validated_data['last_name'],)
+                                        last_name=serializer.validated_data['last_name'])
         courier = Courier.objects.create(user=user, courier_phone_number = serializer.validated_data['courier_phone_number'], plate=serializer.validated_data['plate'], courier_status = 1)
         wallet = Wallet.objects.create(courier=courier, current_money = 0)
 
