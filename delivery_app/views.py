@@ -191,14 +191,4 @@ class CourierRegistrationView(CreateAPIView):
                                         first_name=serializer.validated_data['first_name'], 
                                         last_name=serializer.validated_data['last_name'])
         courier = Courier.objects.create(user=user, courier_phone_number = serializer.validated_data['courier_phone_number'], plate=serializer.validated_data['plate'], courier_status = 1)
-        wallet = Wallet.objects.create(courier=courier, current_money = 0)
-
-
-
-
-
-            
-
-
-
-        
+        wallet = Wallet.objects.create(courier=courier, current_money = 0)        

@@ -1,5 +1,17 @@
 from django.urls import path
-from delivery_app.views import welcome_page, cancle_delivery, DeliveryList, CreateDelivery, ShowDeliveriesToCourier, CourierLoginView, CourierRefreshView, RetrieveDeliverystatus, ChooseDelivery, ShowAvailableDelivery, UpdateDelivery, CourierRegistrationView
+from delivery_app.views import (welcome_page,
+                                cancle_delivery,
+                                DeliveryList,
+                                CreateDelivery,
+                                ShowDeliveriesToCourier,
+                                CourierLoginView,
+                                CourierRefreshView,
+                                RetrieveDeliverystatus,
+                                ChooseDelivery,
+                                ShowAvailableDelivery,
+                                UpdateDelivery,
+                                CourierRegistrationView)
+
 
 urlpatterns = [
     path('', welcome_page),
