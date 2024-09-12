@@ -19,6 +19,7 @@ class Location(models.Model):
 
 class Delivery(models.Model):
     code = models.CharField(max_length = 16, unique=True)
+    restuarant_name = models.CharField(max_length=120, default="")
     origin = models.ForeignKey(Location, on_delete = models.CASCADE, related_name='delivery_origin')  
     destination = models.ForeignKey(Location, on_delete = models.CASCADE, related_name='delivery_destiation')  
     courier = models.ForeignKey(Courier, on_delete = models.PROTECT, blank = True, null = True)
