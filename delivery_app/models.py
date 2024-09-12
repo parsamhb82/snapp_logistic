@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+
 class Courier(models.Model):
     user = models.OneToOneField(User, on_delete = models.PROTECT, blank=True, null=True)
     courier_status = models.IntegerField()
@@ -27,25 +28,18 @@ class Delivery(models.Model):
     delivery_price = models.FloatField()
     def __str__(self) -> str:
         return self.code
+    
+
     class Meta:
         verbose_name = "delivery"
         verbose_name_plural = "deliveries" 
+
 
 class Wallet(models.Model):
     current_money = models.IntegerField(blank = True, null = True)
     courier = models.OneToOneField(Courier, on_delete = models.CASCADE, blank = True, null = True)
 
 
-    
 class Transaction(models.Model):
     wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, blank = True, null=True)
     amount = models.FloatField(blank=True, null=True)
-    
-
-
-    
-
-
-
-    
-
