@@ -19,7 +19,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 import environ
 env = environ.Env()
-environ.Env.read_env()
+environ.Env.read_env("./snapp_logistic/.env")
 
 
 class CourierLoginView(TokenObtainPairView):
@@ -83,7 +83,7 @@ class ShowAvailableDelivery(ListAPIView):
 def api_to_neshan(orilat, orilong, destlat,destlong):
     
     url = f'https://api.neshan.org/v4/direction?type=motorcycle&origin={orilat},{orilong}&destination={destlat},{destlong}'
-    api_key = env('API_KEY')
+    api_key = env('API_KEY_NESHAN')
     response = requests.get(url, headers={'Api-Key': api_key})
     json_file = json.loads(response.content)
     #distance = json_file["routes"][0]['legs'][0]['distance']['value']
@@ -92,6 +92,8 @@ def api_to_neshan(orilat, orilong, destlat,destlong):
 class CreateDelivery(APIView):
 
     def post(self, request):
+        if request.headers.get('API-KEY') != '9f625402-fc8a-41':
+            return Response({'error': 'Invalid API key'}, status=480)
         serializer = CreateDeliverySerializer(data = request.data)
         if serializer.is_valid():
             code = generate_unique_delivary_code()
@@ -106,7 +108,8 @@ class CreateDelivery(APIView):
             delivery_summary = json_file["routes"][0]['legs'][0]['summary']
             delivery = Delivery.objects.create(code = code, origin = origin, destination = destination, delivery_status = 1, max_delivery_time = f'{delivary_duration}', delivery_price = delivery_price, courier = None, summary = delivery_summary)
             return Response({"message": "Delivery created successfully",
-                             "delivary_price" : delivery_price}, status=status.HTTP_201_CREATED)
+                             "delivery_price" : delivery_price,
+                             'delivery_duration' : delivary_duration}, status=status.HTTP_201_CREATED)
         return Response({"error": "Bad request"}, status=status.HTTP_400_BAD_REQUEST)
     
 class ShowDeliveriesToCourier(APIView):
@@ -119,17 +122,17 @@ class ShowDeliveriesToCourier(APIView):
         courier_lat = request.data['lat']
         courier_long = request.data['long']
         paramsstr = ''
-        lats = []
-        longs = []
+        #lats = []
+        #longs = []
         for delivery in deliveries:
             if delivery.delivery_status == 1:
                 paramsstr += f"{delivery.origin.lat},{delivery.origin.long}%7C"
-                lats.append(delivery.origin.lat)
-                longs.append(delivery.origin.long)
+                #lats.append(delivery.origin.lat)
+                #longs.append(delivery.origin.long)
 
         paramsstr = paramsstr[:-3]
         url = f"https://api.neshan.org/v1/distance-matrix?type=motorcycle&origins={courier_lat},{courier_long}&destinations={paramsstr}"
-        api_key = env("API_KEY_NESHAN_ADJACENT_MATRIX")
+        api_key = env('API_KEY_NESHAN_ADJACENT_MATRIX')
         response = requests.get(url, headers={'Api-Key': api_key})
         json_file = json.loads(response.content)
         if json_file['status'] == 'Ok':
@@ -140,7 +143,7 @@ class ShowDeliveriesToCourier(APIView):
             for count, element in enumerate(elements):
                 if element['status'] == 'Ok':
                     distance = element['distance']['value']
-                    if distance <= 100000000000:
+                    if distance <= 3000:
                         response_data.append(
                             {
                                 'delivery_code': deliveries[count].code,
