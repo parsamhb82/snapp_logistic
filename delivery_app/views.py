@@ -17,6 +17,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
+import environ
+env = environ.Env()
+environ.Env.read_env()
 
 
 class CourierLoginView(TokenObtainPairView):
@@ -80,7 +83,7 @@ class ShowAvailableDelivery(ListAPIView):
 def api_to_neshan(orilat, orilong, destlat,destlong):
     
     url = f'https://api.neshan.org/v4/direction?type=motorcycle&origin={orilat},{orilong}&destination={destlat},{destlong}'
-    api_key = 'service.9fc8ab4077f34c9eaf03966f572c33f6'
+    api_key = env('API_KEY')
     response = requests.get(url, headers={'Api-Key': api_key})
     json_file = json.loads(response.content)
     #distance = json_file["routes"][0]['legs'][0]['distance']['value']
@@ -125,7 +128,7 @@ class ShowDeliveriesToCourier(APIView):
 
         paramsstr = paramsstr[:-3]
         url = f"https://api.neshan.org/v1/distance-matrix?type=motorcycle&origins={courier_lat},{courier_long}&destinations={paramsstr}"
-        api_key = 'service.680950bb710e40c59ec4c81b22f131c4'
+        api_key = env("API_KEY_NESHAN_ADJACENT_MATRIX")
         response = requests.get(url, headers={'Api-Key': api_key})
         json_file = json.loads(response.content)
         if json_file['status'] == 'Ok':
