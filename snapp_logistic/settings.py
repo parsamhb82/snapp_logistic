@@ -85,7 +85,7 @@ WSGI_APPLICATION = 'snapp_logistic.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'logistic',
+        'NAME': env("DB_NAME"),
         'USER': env("DATABASE_USER"),
         'PASSWORD': env("DATABASE_PASSWORD"),
         'HOST' : '127.0.0.1',
