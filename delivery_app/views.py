@@ -18,6 +18,7 @@ from rest_framework import status
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 import environ
+from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
 env = environ.Env()
 environ.Env.read_env("./snapp_logistic/.env")
 
@@ -90,8 +91,11 @@ def api_to_neshan(orilat, orilong, destlat,destlong):
     return json_file
     
 class CreateDelivery(APIView):
+    parser_classes = [JSONParser, FormParser, MultiPartParser]
 
     def post(self, request):
+        if type(request.data) != dict:
+            return Response({'error': 'Invalid data format'}, status=400)
         if request.headers.get('API-KEY') != '9f625402-fc8a-41':
             return Response({'error': 'Invalid API key'}, status=480)
         serializer = CreateDeliverySerializer(data = request.data)
@@ -109,7 +113,7 @@ class CreateDelivery(APIView):
             delivery = Delivery.objects.create(code = code, origin = origin, destination = destination, delivery_status = 1, max_delivery_time = f'{delivary_duration}', delivery_price = delivery_price, courier = None, summary = delivery_summary)
             return Response({"message": "Delivery created successfully",
                              "delivery_price" : delivery_price,
-                             'delivery_duration' : delivary_duration}, status=status.HTTP_201_CREATED)
+                             "delivery_duration" : delivary_duration}, status=status.HTTP_201_CREATED)
         return Response({"error": "Bad request"}, status=status.HTTP_400_BAD_REQUEST)
     
 class ShowDeliveriesToCourier(APIView):
