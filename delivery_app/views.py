@@ -103,20 +103,21 @@ class CreateDelivery(APIView):
             delivary_duration = int(delivary_duration) + random.randint(100, 1000)
             delivary_duration = delivary_duration = (delivary_duration // 60) + 1
             delivery_price = int(delivery_price) * 10
-            delivery = Delivery.objects.create(code = code, origin = origin, destination = destination, delivery_status = 1, max_delivery_time = f'{delivary_duration}', delivery_price = delivery_price, courier = None)
+            delivery_summary = json_file["routes"][0]['legs'][0]['summary']
+            delivery = Delivery.objects.create(code = code, origin = origin, destination = destination, delivery_status = 1, max_delivery_time = f'{delivary_duration}', delivery_price = delivery_price, courier = None, summary = delivery_summary)
             return Response({"message": "Delivery created successfully",
                              "delivary_price" : delivery_price}, status=status.HTTP_201_CREATED)
         return Response({"error": "Bad request"}, status=status.HTTP_400_BAD_REQUEST)
     
 class ShowDeliveriesToCourier(APIView):
-    # permission_classes = [IsAuthenticated, CourierPermission]
+    permission_classes = [IsAuthenticated, CourierPermission]
 
-    def get(self, request):
-        # if request.user.courier.courier_status == 2:
-        #     return Response({"error": "You are not available"}, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request):
+        if request.user.courier.courier_status == 2:
+            return Response({"error": "You are not available"}, status=status.HTTP_400_BAD_REQUEST)
         deliveries = Delivery.objects.filter(delivery_status = 1)
-        courier_lat = 35.725729 # needs to be implemented
-        courier_long = 51.373739
+        courier_lat = request.data['lat']
+        courier_long = request.data['long']
         paramsstr = ''
         lats = []
         longs = []
@@ -150,7 +151,8 @@ class ShowDeliveriesToCourier(APIView):
                                 'delivery_destination_long': deliveries[count].destination.long,
                                 'delivery_max_delivery_time': deliveries[count].max_delivery_time,
                                 'delivery_distance': distance,
-                                'delivery_destination_address': destinations[count]
+                                'delivery_destination_address': destinations[count],
+                                'delivery_summary' : deliveries[count].summary
                             }
                         )
             return Response(response_data, status=status.HTTP_200_OK)

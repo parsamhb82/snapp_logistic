@@ -27,6 +27,7 @@ class Delivery(models.Model):
     delivery_status = models.IntegerField()
     max_delivery_time = models.CharField(max_length=120)
     delivery_price = models.FloatField()
+    summary = models.CharField(max_length=255, blank=True, null=True)
     def __str__(self) -> str:
         return self.code
     
